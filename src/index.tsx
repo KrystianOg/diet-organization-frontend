@@ -5,10 +5,12 @@ import "./index.css";
 import App from "./App";
 import { BrowserRouter } from "react-router-dom";
 import { useChainProviders } from "react-flat-providers";
-import { SnackbarProvider } from "notistack";
+// import { SnackbarProvider } from "notistack";
 import { HelmetProvider } from "react-helmet-async";
 import { Provider as ReduxProvider } from "react-redux";
 import { store } from "./app/store";
+import ThemeProvider from "./contexts/ThemeProvider";
+import LocalizationProvider from "./contexts/LocalizationProvider";
 
 if (process.env.NODE_ENV === "production") {
 	disableReactDevTools();
@@ -21,9 +23,11 @@ const root = ReactDOM.createRoot(
 // using chain providers to prevent deep providers nesting
 const ChainedProviders = useChainProviders()
 	.add(React.StrictMode)
-	.add(ReduxProvider, { store: store })
+	.add(ReduxProvider, { store })
 	.add(HelmetProvider)
-	.add(SnackbarProvider)
+	// .add(SnackbarProvider)
+	.add(ThemeProvider)
+	.add(LocalizationProvider)
 	.add(BrowserRouter)
 	.make();
 
