@@ -4,6 +4,7 @@ import { Container, Tabs, Tab } from "@mui/material";
 import { ModelTraining } from "@mui/icons-material";
 import MealsStepper from "./MealsStepper";
 import { Fab } from "../../components";
+import dayjs, { Dayjs } from "dayjs";
 
 const days = [
 	"Monday",
@@ -16,7 +17,8 @@ const days = [
 ];
 
 const Planner = () => {
-	const [tab, setTab] = useState<number>(0);
+	const today = dayjs().day() - 1;
+	const [tab, setTab] = useState<number>(today >= 0 ? today : 6);
 
 	const handleChange = (event: React.SyntheticEvent, newValue: number) => {
 		setTab(newValue);

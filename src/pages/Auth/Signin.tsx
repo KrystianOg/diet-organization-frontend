@@ -7,6 +7,7 @@ import {
 	Checkbox,
 	Avatar,
 	IconButton,
+	styled,
 } from "@mui/material";
 import { LockOutlined, Close } from "@mui/icons-material";
 import { Helmet } from "react-helmet-async";
@@ -14,23 +15,71 @@ import { Helmet } from "react-helmet-async";
 import { TextField, Button } from "../../components/Rounded";
 // import { useNavigate } from "react-router-dom";
 import { Link } from "../../components/RouterLink";
-import { FormEvent } from "react";
+import { FormEvent, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { ReactComponent as Carrot } from "../../animations/carrot.svg";
+import { useForm } from "react-hook-form";
+import { useSignInMutation } from "../../app/auth";
+import { SignInCredentials } from "../../types/Auth";
 
-const Login = () => {
+const MCarrot = styled(Carrot)(({ theme }) => ({
+	fill: theme.palette.primary.main,
+	transform: "rotate(45deg)",
+}));
+
+const SignIn = () => {
 	const location = useLocation();
 	const navigate = useNavigate();
+	const rememberMe = useRef<HTMLInputElement>(null);
 	const from = location.state?.from?.pathname || "/";
 
-	const handleSubmit = (e: FormEvent) => {
-		e.preventDefault();
-		console.log("submit");
+	const {
+		register,
+		formState: { errors },
+		watch,
+		handleSubmit,
+		setError,
+	} = useForm();
+	const [signIn, { isLoading }] = useSignInMutation();
+
+	const onSubmit = async (data: any) => {
+		if (Object.keys(errors).length > 0) return;
+
+		await signIn(data as SignInCredentials)
+			.unwrap()
+			.then((res) => {
+				navigate(from, { replace: true });
+				rememberMe?.current?.checked
+					? localStorage.setItem("refresh", res.refresh)
+					: sessionStorage.setItem("refresh", res.refresh);
+			})
+			.catch((err) => {
+				console.log(err);
+				if (err.status === 400) {
+					if (err.data) {
+						setError(
+							"email",
+							{
+								type: "manual",
+								message: err.data.error,
+							},
+							{
+								shouldFocus: true,
+							}
+						);
+						setError("password", {
+							type: "manual",
+							message: err.data.error,
+						});
+					}
+				}
+			});
 	};
 
 	return (
 		<Container component="main" maxWidth="xs">
 			<Helmet>
-				<title>Sign in</title>
+				<title>Sign In</title>
 			</Helmet>
 			<Box
 				sx={{
@@ -40,40 +89,49 @@ const Login = () => {
 					alignItems: "center",
 				}}
 			>
-				<Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
-					<LockOutlined />
+				<Avatar sx={{ m: 1, bgcolor: "transparent" }}>
+					<MCarrot />
 				</Avatar>
 				<Typography component="h1" variant="h5">
 					Sign in
 				</Typography>
-				<Box
-					component="form"
-					onSubmit={(e) => handleSubmit(e)}
-					noValidate
-					sx={{ mt: 1 }}
-				>
+				<Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 1 }}>
 					<TextField
 						margin="normal"
 						required
 						fullWidth
 						id="email"
 						label="Email Address"
-						name="email"
 						autoComplete="email"
 						autoFocus
+						{...register("email", {
+							required: "Email is required",
+						})}
+						helperText={errors.email && String(errors.email.message)}
+						error={!!errors.email}
 					/>
 					<TextField
 						margin="normal"
 						required
 						fullWidth
-						name="password"
 						label="Password"
 						type="password"
 						id="password"
 						autoComplete="current-password"
+						{...register("password", {
+							required: "Password is required",
+						})}
+						helperText={errors.password && String(errors.password.message)}
+						error={!!errors.password}
 					/>
 					<FormControlLabel
-						control={<Checkbox value="remember" color="primary" />}
+						control={
+							<Checkbox
+								value="remember"
+								color="primary"
+								inputRef={rememberMe}
+							/>
+						}
 						label="Remember me"
 					/>
 					<Button
@@ -110,4 +168,4 @@ const Login = () => {
 	);
 };
 
-export default Login;
+export default SignIn;

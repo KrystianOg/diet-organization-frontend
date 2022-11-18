@@ -4,13 +4,18 @@ import { api } from './api'
 import { theme } from '../features'
 // other imports 
 
+const thunk = (store: any) => (next: any) => (action: any) =>
+    typeof action === 'function'
+        ? action(store.dispatch, store.getState)
+        : next(action)
+
 export const store = configureStore({
     reducer: {
         theme,
         [api.reducerPath]: api.reducer
     },
     devTools: true,
-    middleware: [api.middleware]
+    middleware: [thunk, api.middleware]
 })
 
 setupListeners(store.dispatch)
